@@ -1,5 +1,3 @@
-{{- if .Values.knativeDeploy }}
-{{- else }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -8,10 +6,7 @@ metadata:
     draft: {{ default "draft-app" .Values.draft }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
-{{- if .Values.hpa.enabled }}
-{{- else }}
   replicas: {{ .Values.replicaCount }}
-{{- end }}
   template:
     metadata:
       labels:
@@ -25,16 +20,11 @@ spec:
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
-{{- range $pkey, $pval := .Values.env }}
-        - name: {{ $pkey }}
-          value: {{ quote $pval }}
-{{- end }}
-        envFrom:
-{{ toYaml .Values.envFrom | indent 10 }}
+        - name: MONGODB_HOST
+          value: "mongodb://{{.Release.Name}}-mongodb-replicaset-0.{{.Release.Name}}-mongodb-replicaset,{{.Release.Name}}-mongodb-replicaset-1.{{.Release.Name}}-mongodb-replicaset,{{.Release.Name}}-mongodb-replicaset-2.{{.Release.Name}}-mongodb-replicaset:27017"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         resources:
 {{ toYaml .Values.resources | indent 12 }}
-{{- end }}
